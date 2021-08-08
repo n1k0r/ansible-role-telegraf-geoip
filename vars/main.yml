@@ -1,0 +1,11 @@
+telegraf_geoip_config: "/etc/telegraf/geoip.conf"
+
+telegraf_geoip_bin_path: "/etc/telegraf/geoip"
+telegraf_geoip_bin_url: "https://github.com/n1k0r/telegraf-geoip/releases/latest/download/geoip"
+
+telegraf_geoip_db_name: "GeoLite2-City.mmdb"
+telegraf_geoip_db_path: "/etc/telegraf/{{ telegraf_geoip_db_name }}"
+telegraf_geoip_db_repo: "https://github.com/P3TERX/GeoLite.mmdb"
+telegraf_geoip_db_info: "/etc/telegraf/mmdb_version"
+
+telegraf_geoip_command : '["{{ telegraf_geoip_bin_path }}", "--config", "{{ telegraf_geoip_config }}"]'

@@ -1,0 +1,46 @@
+- name: Check DB file
+  stat:
+    path: "{{ telegraf_geoip_db_path }}"
+  become: yes
+  register: db
+
+- name: Check DB version file
+  stat:
+    path: "{{ telegraf_geoip_db_info }}"
+  when: db.stat.exists
+  register: db_ver_file
+
+- name: Get version
+  slurp:
+    src: "{{ telegraf_geoip_db_info }}"
+  when: db.stat.exists and db_ver_file.stat.exists
+  register: db_ver
+
+- name: Download GeoLite-City database
+  when: not db.stat.exists or not db_ver_file.stat.exists or db_ver.content | b64decode != telegraf_geoip.db_version | default("latest")
+  get_url:
+    url: "{{ telegraf_geoip_db_repo + (
+      '/releases/download/' + telegraf_geoip.db_version + '/'
+      if telegraf_geoip.db_version is defined else
+      '/releases/latest/download/'
+    ) + telegraf_geoip_db_name }}"
+    dest: "{{ telegraf_geoip_db_path }}"
+    force: yes
+  notify: Restart Telegraf
+
+- name: Update version file
+  copy:
+    content: "{{ telegraf_geoip.db_version | default('latest') }}"
+    dest: "{{ telegraf_geoip_db_info }}"
+
+- name: Download plugin binary
+  get_url:
+    url: "{{ telegraf_geoip_bin_url }}"
+    dest: "{{ telegraf_geoip_bin_path }}"
+    mode: 0755
+
+- name: Template configuration
+  template:
+    src: "{{ telegraf_geoip.config }}"
+    dest: "{{ telegraf_geoip_config }}"
+  notify: Restart Telegraf
